@@ -2,48 +2,48 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.style.backgroundColor = 'black';
 
-
-
 // used to terminate the game
 let game_over = false;
 
 // toggle developer mode
 const dev_mode = true;
 
-// customize the ball
-const ball_radius = 16;
-
-// customize the rectangles
-const rectangle_length = 100;
-const rectangle_width = 10;
-const rectangle_space = 20;
-const rectangle_speed = 4;
-
-// global ball variables
-let ball_x = Math.floor(canvas.width/2);
-let ball_y = Math.floor(canvas.height/2);
-let start_angle = 2*Math.PI*Math.random();
-let ball_dx = 5*Math.cos(start_angle);
-let ball_dy = 5*Math.sin(start_angle);
-
-// global rectangle variables
-const rectangle1_x_left = rectangle_space;
-const rectangle2_x_left = canvas.width - rectangle_space - rectangle_width;
-let rectangle1_y_top = Math.floor(canvas.height/2) - 50;
-let rectangle2_y_top = Math.floor(canvas.height/2) - 50;
-
-// ball object...
-let ball = {
+// general ball
+const ball = {
     r: 16,
+};
+// general rectangle
+const rect = {
+    s: 20,
+    w: 10,
+    l: 100,
+    v: 4,
+};
+// specific ball 1
+let ball1 = {
     x: Math.floor(canvas.width/2),
     y: Math.floor(canvas.height/2),
     dx: Math.cos(2*Math.PI*Math.random()),
     dy: Math.sin(2*Math.PI*Math.random()),
-}
+};
+// specific rectangle 1
+let rect1 = {
+    nx: rect.s,
+    px: rect.s+rect.w,
+    ny: Math.floor(canvas.height/2)-50,
+    py: Math.floor(canvas.height/2)-50+rect.l,
+    dy: 0,
+};
+// specific rectangle 2
+let rect2 = {
+    nx: canvas.width-rect.s-rect.w,
+    px: canvas.width-rect.s,
+    ny: Math.floor(canvas.height/2)-50,
+    py: Math.floor(canvas.height/2)-50+rect.l,
+    dy: 0,
+};
 
-// rect object...
-
-// rect object...
+let d = [0,0,0,0];
 
 const validKeys = ['w','s'];
 
@@ -64,96 +64,109 @@ window.addEventListener('keyup',e=>{
 });
 
 function isSafe() {
-    const unsafe_distance = rectangle_space + rectangle_width + ball_radius;
-    const ball_safe_before = (unsafe_distance < ball.x < canvas.width - unsafe_distance);
-    const ball_safe_after = (unsafe_distance < ball.x + ball.dx < canvas.width - unsafe_distance);
+    const unsafe_distance = rect.s + rect.w + ball.r;
+    const ball_safe_before = (unsafe_distance < ball1.x < canvas.width - unsafe_distance);
+    const ball_safe_after = (unsafe_distance < ball1.x + ball1.dx < canvas.width - unsafe_distance);
     return ball_safe_before && ball_safe_after;
 }
 
 function move() {
     if ( isSafe() ) {
-        ball.x += ball.dx;
-        ball.y += ball.dy;
-        if ( ball.y < ball.r ) {
-            ball.y += 2*(ball.r - ball.y);
-            ball.dy *= -1;
+        ball1.x += ball1.dx;
+        ball1.y += ball1.dy;
+        if ( ball1.y < ball.r ) {
+            ball1.y += 2*(ball.r - ball1.y);
+            ball1.dy *= -1;
         }
-        if ( ball.y > canvas.height - ball.r ) {
-            ball.y -= 2*(ball.y - canvas.height + ball.r);
-            ball.dy *= -1;
+        if ( ball1.y > canvas.height - ball.r ) {
+            ball1.y -= 2*(ball1.y - canvas.height + ball.r);
+            ball1.dy *= -1;
         }
     }
-    let num1 = rectangle_space + rectangle_width + ball.r;
-    let bool1 = ball.x > num1;
-    bool1 = bool1 && (ball.x + ball.dx < num1);
-    let slope_min = (rectangle1_y_top - ball.y)/Math.abs(num1 - ball.x);
-    let slope = ball.dy/Math.abs(ball.dx);
-    let slope_max = (rectangle1_y_top+rectangle_length - ball.y)/Math.abs(num1 - ball.x);
+    let num1 = rect.s + rect.w + ball.r;
+    let bool1 = ball1.x > num1;
+    bool1 = bool1 && (ball1.x + ball1.dx < num1);
+    let slope_min = (rect1.ny - ball1.y)/Math.abs(num1 - ball1.x);
+    let slope = ball1.dy/Math.abs(ball1.dx);
+    let slope_max = (rect1.ny + rect.l - ball1.y)/Math.abs(num1 - ball1.x);
     bool1 = bool1 && (slope_min < slope < slope_max);
     if ( bool1 ) {
-        ball.x += ball.dx;
-        ball.x += 2*(num1 - ball.x);
-        ball.dx *= -1;
+        ball1.x += ball1.dx;
+        ball1.x += 2*(num1 - ball1.x);
+        ball1.dx *= -1;
     }
-    if ( ball.x + ball.dx < ball.r || ball.x + ball.dx > canvas.width - ball.r ) {
+    if ( ball1.x + ball1.dx < ball.r || ball1.x + ball1.dx > canvas.width - ball.r ) {
         game_over = true;
     }
 }
 
 function reset() {
-    ball.x = Math.floor(canvas.width/2);
-    ball.y = Math.floor(canvas.height/2);
-    start_angle = 2*Math.PI*Math.random();
-    ball.dx = 5*Math.cos(start_angle);
-    ball.dy = 5*Math.sin(start_angle);
-    rectangle1_y_top = Math.floor(canvas.height/2) - 50;
-    rectangle2_y_top = Math.floor(canvas.height/2) - 50;
+    ball1.x = Math.floor(canvas.width/2);
+    ball1.y = Math.floor(canvas.height/2);
+    ball1.dx = 2*Math.cos(2*Math.PI*Math.random());
+    ball1.dy = 2*Math.sin(2*Math.PI*Math.random());
+    rect1.ny = Math.floor(canvas.height/2) - 50;
+    rect2.ny = Math.floor(canvas.height/2) - 50;
     game_over = false;
+}
+
+function collect() {
+    if(controller.w){
+        rect1.dy = -rect.v;
+    }else if(controller.s){
+        rect1.dy = rect.v;
+    }
+}
+
+function predict() {
+    // code
+    ball1.x += ball1.dx;
+    ball1.y += ball1.dy;
 }
 
 function draw() {
     ctx.beginPath();
     ctx.fillStyle = 'green';
-    ctx.arc(ball_x,ball_y,ball_radius,0,2*Math.PI);
+    ctx.arc(ball1.x,ball1.y,ball.r,0,2*Math.PI);
     ctx.fill();
     ctx.closePath();
     ctx.beginPath();
     ctx.fillStyle = 'blue';
-    ctx.fillRect(rectangle_space,rectangle1_y_top,rectangle_width,rectangle_length);
+    ctx.fillRect(rect.s,rect1.ny,rect.w,rect.l);
     ctx.fill();
     ctx.closePath();
     ctx.beginPath();
     ctx.fillStyle = 'red';
-    ctx.fillRect(canvas.width-rectangle_space-rectangle_width,rectangle2_y_top,rectangle_width,rectangle_length);
+    ctx.fillRect(canvas.width-rect.s-rect.w,rect2.ny,rect.w,rect.l);
     ctx.fill();
     ctx.closePath();
-    if(dev_mode){
+    if ( dev_mode ) {
         ctx.beginPath();
-        ctx.arc(ball_x, ball_y, 1, 0, 2*Math.PI);
-        ctx.moveTo(rectangle_space + rectangle_width + ball_radius, rectangle1_y_top);
-        ctx.lineTo(rectangle_space + rectangle_width + ball_radius, rectangle1_y_top + rectangle_length);
-        ctx.arc(rectangle_space + rectangle_width, rectangle1_y_top + rectangle_length, ball_radius, 0, Math.PI/2);
-        ctx.lineTo(rectangle_space, rectangle1_y_top + rectangle_length + ball_radius);
-        ctx.arc(rectangle_space, rectangle1_y_top + rectangle_length, ball_radius, Math.PI/2, Math.PI);
-        ctx.lineTo(rectangle_space - ball_radius, rectangle1_y_top);
-        ctx.arc(rectangle_space, rectangle1_y_top, ball_radius, Math.PI, 3*Math.PI/2);
-        ctx.lineTo(rectangle_space + rectangle_width, rectangle1_y_top - ball_radius);
-        ctx.arc(rectangle_space + rectangle_width, rectangle1_y_top, ball_radius, 3*Math.PI/2, 2*Math.PI);
-        const addThis = canvas.width - 2*rectangle_space - rectangle_width;
-        ctx.moveTo(addThis + rectangle_space + rectangle_width + ball_radius, rectangle1_y_top);
-        ctx.lineTo(addThis + rectangle_space + rectangle_width + ball_radius, rectangle1_y_top+ rectangle_length);
-        ctx.arc(addThis + rectangle_space + rectangle_width, rectangle1_y_top + rectangle_length, ball_radius, 0, Math.PI/2);
-        ctx.lineTo(addThis + rectangle_space, rectangle1_y_top + rectangle_length + ball_radius);
-        ctx.arc(addThis + rectangle_space, rectangle1_y_top + rectangle_length, ball_radius, Math.PI/2, Math.PI);
-        ctx.lineTo(addThis + rectangle_space - ball_radius, rectangle1_y_top);
-        ctx.arc(addThis + rectangle_space, rectangle1_y_top, ball_radius, Math.PI, 3*Math.PI/2);
-        ctx.lineTo(addThis + rectangle_space + rectangle_width, rectangle1_y_top - ball_radius);
-        ctx.arc(addThis + rectangle_space + rectangle_width, rectangle1_y_top, ball_radius, 3*Math.PI/2, 2*Math.PI);
-        ctx.moveTo(ball_radius, ball_radius);
-        ctx.lineTo(canvas.width - ball_radius, ball_radius);
-        ctx.lineTo(canvas.width - ball_radius, canvas.height - ball_radius);
-        ctx.lineTo(ball_radius, canvas.height - ball_radius);
-        ctx.lineTo(ball_radius, ball_radius);
+        ctx.arc(ball1.x, ball1.y, 1, 0, 2*Math.PI);
+        ctx.moveTo(rect1.px + ball.r, rect1.ny);
+        ctx.lineTo(rect1.px + ball.r, rect1.py);
+        ctx.arc(rect1.px, rect1.py, ball.r, 0, Math.PI/2);
+        ctx.lineTo(rect.s, rect1.py + ball.r);
+        ctx.arc(rect.s, rect1.py, ball.r, Math.PI/2, Math.PI);
+        ctx.lineTo(rect.s - ball.r, rect1.ny);
+        ctx.arc(rect.s, rect1.ny, ball.r, Math.PI, 3*Math.PI/2);
+        ctx.lineTo(rect1.px, rect1.ny - ball.r);
+        ctx.arc(rect1.px, rect1.ny, ball.r, 3*Math.PI/2, 2*Math.PI);
+        const addThis = canvas.width - 2*rect.s - rect.w;
+        ctx.moveTo(addThis + rect1.px + ball.r, rect1.ny);
+        ctx.lineTo(addThis + rect1.px + ball.r, rect1.ny+ rect.l);
+        ctx.arc(addThis + rect1.px, rect1.py, ball.r, 0, Math.PI/2);
+        ctx.lineTo(addThis + rect.s, rect1.py + ball.r);
+        ctx.arc(addThis + rect.s, rect1.py, ball.r, Math.PI/2, Math.PI);
+        ctx.lineTo(addThis + rect.s - ball.r, rect1.ny);
+        ctx.arc(addThis + rect.s, rect1.ny, ball.r, Math.PI, 3*Math.PI/2);
+        ctx.lineTo(addThis + rect1.px, rect1.ny - ball.r);
+        ctx.arc(addThis + rect1.px, rect1.ny, ball.r, 3*Math.PI/2, 2*Math.PI);
+        ctx.moveTo(ball.r, ball.r);
+        ctx.lineTo(canvas.width - ball.r, ball.r);
+        ctx.lineTo(canvas.width - ball.r, canvas.height - ball.r);
+        ctx.lineTo(ball.r, canvas.height - ball.r);
+        ctx.lineTo(ball.r, ball.r);
         ctx.lineWidth = 2;
         ctx.strokeStyle = 'white';
         ctx.stroke();
@@ -164,7 +177,8 @@ function draw() {
 async function game(){
     while(true){
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        move();
+        collect();
+        predict();
         if ( game_over ) {
             reset();
             ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -175,4 +189,4 @@ async function game(){
     }
 }
 
-// game();
+game();
